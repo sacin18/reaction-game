@@ -3,6 +3,21 @@
 #include <chrono>
 #include <glut.h>
 #include <freeglut.h>
+
+#include <thread>
+
+#include <windows.h>
+#include <stdio.h>
+#include <tchar.h>
+#include <strsafe.h>
+
+#define CONNECTING_STATE 0 
+#define READING_STATE 1 
+#define WRITING_STATE 2 
+#define INSTANCES 4 
+#define PIPE_TIMEOUT 5000
+#define BUFSIZE 4096
+
 #define resX 600
 #define scoreWidth 200
 #define resY 600
@@ -16,6 +31,26 @@ typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::milliseconds ms;
 typedef std::chrono::duration<float> fsec;
+
+typedef struct {
+	OVERLAPPED oOverlap;
+	HANDLE hPipeInst;
+	TCHAR chRequest[BUFSIZE];
+	DWORD cbRead;
+	TCHAR chReply[BUFSIZE];
+	DWORD cbToWrite;
+	DWORD dwState;
+	BOOL fPendingIO;
+} PIPEINST, * LPPIPEINST;
+
+
+VOID DisconnectAndReconnect(DWORD);
+BOOL ConnectToNewClient(HANDLE, LPOVERLAPPED);
+VOID GetAnswerToRequest(LPPIPEINST);
+
+PIPEINST Pipe[INSTANCES];
+HANDLE hEvents[INSTANCES];
+int startServer();
 
 class Point {
 public:
@@ -88,6 +123,7 @@ void renderPoints();
 void drawTarget(float x, float y);
 void drawCharacter(int num,Point p,int width,int height,bool positive);
 void drawSplitTime();
+void mouseClickEffect(int px, int py);
 
 void display() {
 	glClearColor(1, 1, 1, 1);
@@ -116,12 +152,15 @@ int main(int argv, char** argc) {
 	cout << len_of_half_square << endl;
 	glutInit(&argv, argc);
 	glutInitWindowSize(resX + scoreWidth, resY);
-	glutInitWindowPosition(600,100);
+	glutInitWindowPosition(0,0);
 	glutCreateWindow("reaction-game");
 	glutDisplayFunc(display);
 	glutMouseFunc(&mouse);
+	std::thread socketThread=std::thread(startServer);
+	glutIdleFunc(display);
 	glutMainLoop();
-	getchar();
+	//getchar();
+	socketThread.join();
 	return 0;
 }
 
@@ -129,59 +168,7 @@ void mouse(int button, int state, int px, int py) {
 	switch (button) {
 	case GLUT_LEFT_BUTTON:
 		if (state == GLUT_DOWN) {
-			if (positiveScore + negativeScore == GAME_OVER) {
-				cout << "game over" << endl;
-				timeKeeper.print();
-				glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
-				glutLeaveMainLoop();
-				//glutDestroyWindow(glutGetWindow());
-				return;
-			}
-			float x=0,y=0;
-			x = float(px) / (resX + scoreWidth) * 2 - 1;
-			y = 1 - float(py) / resY * 2;
-			//cout << x << "|" << y << endl;
-			//cout << (len_of_half_square * resX / (resX + scoreWidth)) << "|" << len_of_half_square << " ! " << target.x << "|" << target.y << endl;
-			//cout << (x >= target.x - (len_of_half_square*resX/(resX+scoreWidth)) && x <= target.x + (len_of_half_square * resX / (resX + scoreWidth)) && y >= target.y - len_of_half_square && y <= target.y + len_of_half_square) << endl;
-			if (x >= target.x - (len_of_half_square * resX / (resX + scoreWidth)) && x <= target.x + (len_of_half_square * resX / (resX + scoreWidth)) && y >= target.y - len_of_half_square && y <= target.y + len_of_half_square) {
-				positiveScore++;
-				if (positiveScore == 1) {
-					timeKeeper.time_start = Time::now();
-					timeKeeper.index = 0;
-				}
-				if (timeKeeper.index >= 0) {
-					auto t0 = Time::now();
-					fsec fs = t0 - timeKeeper.time_start;
-					ms d = std::chrono::duration_cast<ms>(fs);
-					timeKeeper.update(d.count(),true);
-				}
-			} else if(positiveScore>0){
-				negativeScore++;
-				if (timeKeeper.index >= 0) {
-					auto t0 = Time::now();
-					fsec fs = t0 - timeKeeper.time_start;
-					ms d = std::chrono::duration_cast<ms>(fs);
-					timeKeeper.update(d.count(),false);
-				}
-			}
-			clicks++;
-			//points.push_back(new Point(px, py));
-			auto now = std::chrono::high_resolution_clock::now();
-			auto mls = std::chrono::time_point_cast<std::chrono::microseconds>(now);
-			auto epoch = mls.time_since_epoch();
-			auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
-
-			srand(value.count() + int(target.x*1000) + clicks);
-			rand();
-			x = float(rand())/RAND_MAX;
-			y = float(rand())/RAND_MAX;
-			//x = 2 * x * (1 - len_of_half_square*resX/(resX+scoreWidth)) + len_of_half_square * resX / (resX + scoreWidth) - 1 + scoreWidth/(resX+scoreWidth);
-			//y = 2 * y * (1 - len_of_half_square) + len_of_half_square - 1;
-			x = 2 * x * (1 - main_space_offset / 2 - len_of_half_square) + len_of_half_square - 1;
-			y = 2 * y * (1 - len_of_half_square) + len_of_half_square - 1;
-			target.x = x;
-			target.y = y;
-			glutPostRedisplay();
+			mouseClickEffect(px,py);
 		}
 	}
 }
@@ -217,7 +204,7 @@ void drawSplitTime() {
 	}
 	long lastSplit = timeKeeper.latestSplit();
 	bool positive = timeKeeper.latestPositive();
-	cout << "last split : " << lastSplit << endl;
+	//cout << "last split : " << lastSplit << endl;
 	drawCharacter(lastSplit % 10, Point(1 - float(main_space_offset) * 5 / 4, 0.8), 80, 112, positive);
 	drawCharacter(lastSplit / 10 % 10, Point(1 - float(main_space_offset) * 7 / 4, 0.8), 80, 112, positive);
 	drawCharacter(lastSplit /100 % 10, Point(1 - float(main_space_offset) * 9 / 4, 0.8), 80, 112, positive);
@@ -258,7 +245,7 @@ void drawCharacter(int num, Point p, int width, int height, bool positive) {
 	if (positive) {
 		glColor3f(0, 0, 1);
 	} else {
-		glColor3f(1, 0, 0);
+		glColor3f(0.5, 0, 0);
 	}
 	glLineWidth(2);
 
@@ -304,4 +291,101 @@ void drawCharacter(int num, Point p, int width, int height, bool positive) {
 		glVertex2f(g[2], g[3]);
 		glEnd();
 	}
+}
+
+void mouseClickEffect(int px, int py) {
+	if (positiveScore + negativeScore == GAME_OVER) {
+		cout << "game over" << endl;
+		timeKeeper.print();
+		glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
+		glutLeaveMainLoop();
+		//glutDestroyWindow(glutGetWindow());
+		return;
+	}
+	float x = 0, y = 0;
+	x = float(px) / (resX + scoreWidth) * 2 - 1;
+	y = 1 - float(py) / resY * 2;
+	cout << "(" << px << ", " << py << ") processed: (" << x << ", " << y << ") give: (" 
+		<< (target.x - (len_of_half_square * resX / (resX + scoreWidth))) << ", " << (target.y - len_of_half_square) << ")" 
+		<< "(" <<(target.x + (len_of_half_square * resX / (resX + scoreWidth)))<<","<< (target.y + len_of_half_square) << ")" << endl;
+	//cout << x << "|" << y << endl;
+	//cout << (len_of_half_square * resX / (resX + scoreWidth)) << "|" << len_of_half_square << " ! " << target.x << "|" << target.y << endl;
+	//cout << (x >= target.x - (len_of_half_square*resX/(resX+scoreWidth)) && x <= target.x + (len_of_half_square * resX / (resX + scoreWidth)) && y >= target.y - len_of_half_square && y <= target.y + len_of_half_square) << endl;
+	if (x >= target.x - (len_of_half_square * resX / (resX + scoreWidth)) && x <= target.x + (len_of_half_square * resX / (resX + scoreWidth)) && y >= target.y - len_of_half_square && y <= target.y + len_of_half_square) {
+		positiveScore++;
+		if (positiveScore == 1) {
+			timeKeeper.time_start = Time::now();
+			timeKeeper.index = 0;
+		}
+		if (timeKeeper.index >= 0) {
+			auto t0 = Time::now();
+			fsec fs = t0 - timeKeeper.time_start;
+			ms d = std::chrono::duration_cast<ms>(fs);
+			timeKeeper.update(d.count(), true);
+		}
+	} else if (positiveScore > 0) {
+		negativeScore++;
+		if (timeKeeper.index >= 0) {
+			auto t0 = Time::now();
+			fsec fs = t0 - timeKeeper.time_start;
+			ms d = std::chrono::duration_cast<ms>(fs);
+			timeKeeper.update(d.count(), false);
+		}
+	}
+	clicks++;
+	//points.push_back(new Point(px, py));
+	auto now = std::chrono::high_resolution_clock::now();
+	auto mls = std::chrono::time_point_cast<std::chrono::microseconds>(now);
+	auto epoch = mls.time_since_epoch();
+	auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+
+	srand(value.count() + int(target.x * 1000) + clicks);
+	rand();
+	x = float(rand()) / RAND_MAX;
+	y = float(rand()) / RAND_MAX;
+	//x = 2 * x * (1 - len_of_half_square*resX/(resX+scoreWidth)) + len_of_half_square * resX / (resX + scoreWidth) - 1 + scoreWidth/(resX+scoreWidth);
+	//y = 2 * y * (1 - len_of_half_square) + len_of_half_square - 1;
+	x = 2 * x * (1 - main_space_offset / 2 - len_of_half_square) + len_of_half_square - 1;
+	y = 2 * y * (1 - len_of_half_square) + len_of_half_square - 1;
+	target.x = x;
+	target.y = y;
+	glutPostRedisplay();
+}
+
+int startServer() {
+	HANDLE PipeHandle;
+	DWORD BytesRead;
+	CHAR buffer[256];
+
+	if ((PipeHandle = CreateNamedPipe(TEXT("\\\\.\\pipe\\smth"),
+		PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE, 1, 0, 0, 1000, NULL)) == INVALID_HANDLE_VALUE) {
+		printf("CreateNamedPipe failed with error %d\n", GetLastError());
+		return 0;
+	}
+	printf("Server is now running\n");
+	if (ConnectNamedPipe(PipeHandle, NULL) == 0) {
+		printf("ConnectNamedPipe failed with error %d\n", GetLastError());
+		CloseHandle(PipeHandle);
+		return 0;
+	}
+	int counter = 1;
+	int val;
+	while (positiveScore + negativeScore != GAME_OVER) {
+		if (ReadFile(PipeHandle, buffer, sizeof(buffer), &BytesRead, NULL) <= 0) {
+			printf("ReadFile failed with error %d\n", GetLastError());
+			CloseHandle(PipeHandle);
+			return 0;
+		}
+		//printf("%d\n", atoi(buffer));
+		if (counter % 2 == 0) {
+			mouseClickEffect(val, atoi(buffer));
+		} else val = atoi(buffer);
+		counter++;
+	}
+	if (DisconnectNamedPipe(PipeHandle) == 0) {
+		printf("DisconnectNamedPipe failed with error %d\n", GetLastError());
+		return 0;
+	}
+	CloseHandle(PipeHandle);
+	return 0;
 }

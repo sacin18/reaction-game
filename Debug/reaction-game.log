@@ -1,17 +1,17 @@
 ﻿  Source.cpp
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(54,21): warning C4244: 'return': conversion from '__int64' to 'long', possible loss of data
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(57,43): warning C4244: 'return': conversion from '__int64' to 'long', possible loss of data
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(108,84): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(110,79): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(174,45): warning C4244: 'argument': conversion from '_Rep' to 'unsigned int', possible loss of data
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(89,21): warning C4244: 'return': conversion from '__int64' to 'long', possible loss of data
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(92,43): warning C4244: 'return': conversion from '__int64' to 'long', possible loss of data
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(144,84): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(146,79): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(208,79): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(209,84): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(210,84): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(211,86): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(212,87): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(213,88): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(342,45): warning C4244: 'argument': conversion from '_Rep' to 'unsigned int', possible loss of data
           with
           [
               _Rep=__int64
           ]
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(221,79): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(222,84): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(223,84): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(224,86): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(225,87): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Source.cpp(226,88): warning C4305: 'argument': truncation from 'double' to 'float'
   reaction-game.vcxproj -> C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Debug\reaction-game.exe
