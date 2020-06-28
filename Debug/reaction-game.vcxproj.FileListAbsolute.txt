@@ -1,2 +1,0 @@
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Debug\reaction-game.exe
-C:\Users\sacin\OneDrive\Documents\Visual Studio 2019\projects\reaction-game\Debug\reaction-game.pdb
