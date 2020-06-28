@@ -208,16 +208,16 @@ int main() {
         for (int i = 0; i < buffer.size(); i++) {
             try {
                 threadRow[i] = std::thread(threadFunction, i, len, i);
-                //threadRow[i].join();
+                threadRow[i].join();
                 //threadRow[i].detach();
             } catch (char* excp) {
                 std::cout << excp << std::endl;
             }
         }
         //
-        for (int i = 0; i < buffer.size(); i++) {
-            if(threadRow[i].joinable())threadRow[i].join();
-        }
+        //for (int i = 0; i < buffer.size(); i++) {
+        //    if(threadRow[i].joinable())threadRow[i].join();
+        //}
         //
         //while (threadsInUse);
         //cv.wait(lck);
