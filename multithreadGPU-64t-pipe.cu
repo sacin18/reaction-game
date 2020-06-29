@@ -317,7 +317,7 @@ int main() {
             CloseHandle(PipeHandle);
             break;
         }
-        if (WriteFile(PipeHandle, std::to_string(int(float(bufferHeight-sol[1])/bufferHeight*600)-2).c_str(), 14, &BytesWritten, NULL) == 0) {
+        if (WriteFile(PipeHandle, std::to_string(int(float(bufferHeight-sol[1])/bufferHeight*600)+2).c_str(), 14, &BytesWritten, NULL) == 0) {
             printf("WriteFile failed with error %d\n", GetLastError());
             CloseHandle(PipeHandle);
             break;
